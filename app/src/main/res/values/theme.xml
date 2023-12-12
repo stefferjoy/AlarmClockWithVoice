@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.Theme.alarmVoiceClockTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+    </style>
+    <style name="Theme.alarmVoiceClockTheme" parent="Base.Theme.alarmVoiceClockTheme"/>
+
+</resources>
