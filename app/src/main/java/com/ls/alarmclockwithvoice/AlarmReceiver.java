@@ -1,6 +1,7 @@
 package com.ls.alarmclockwithvoice;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -46,10 +47,38 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         // Set the snooze alarm
         long snoozeTimeMillis = System.currentTimeMillis() + snoozeMinutes * 60 * 1000;
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, snoozeTimeMillis, pendingIntent);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager != null && alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, snoozeTimeMillis, pendingIntent);
+            } else {
+                // The app doesn't have permission to schedule exact alarms.
+                // Here you could show a dialog to the user explaining why the app needs this permission
+                // and then direct them to the system settings to grant it.
+            }
+        } else {
+            // For older OS versions or if canScheduleExactAlarms is not a concern, schedule the alarm as usual
+            if (alarmManager != null) {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, snoozeTimeMillis, pendingIntent);
+            }
+        }
 
         // Optionally, cancel the current notification
     }
+
+    private void showPermissionRequestDialog(final Context context) {
+        new AlertDialog.Builder(context)
+                .setTitle("Permission Required")
+                .setMessage("This app requires permission to schedule alarms.")
+                .setPositiveButton("Grant Permission", (dialog, which) -> {
+                    // Intent to open the system settings for exact alarms
+                    Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    context.startActivity(intent);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
 
 
     private void showNotification(Context context) {
