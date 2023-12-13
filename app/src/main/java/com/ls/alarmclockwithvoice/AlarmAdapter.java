@@ -1,5 +1,6 @@
 package com.ls.alarmclockwithvoice;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
 import com.ls.alarmclockwithvoice.databinding.AlarmItemBinding;
@@ -8,10 +9,12 @@ import java.util.List;
 
 public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> {
 
-    private List<Alarm> alarmList;
+    private static List<Alarm> alarmList;
+    private OnAlarmClickListener listener;
 
-    public AlarmAdapter(List<Alarm> alarmList) {
+    public AlarmAdapter(List<Alarm> alarmList, OnAlarmClickListener listener) {
         this.alarmList = alarmList;
+        this.listener = listener;
     }
 
     @Override
@@ -40,13 +43,24 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
         return alarmList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        // Store the binding
+    // ViewHolder class
+    public class ViewHolder extends RecyclerView.ViewHolder {
         final AlarmItemBinding binding;
 
         public ViewHolder(AlarmItemBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        Alarm clickedAlarm = alarmList.get(position);
+                        listener.onAlarmClick(clickedAlarm);
+                    }
+                }
+            });
         }
     }
 }

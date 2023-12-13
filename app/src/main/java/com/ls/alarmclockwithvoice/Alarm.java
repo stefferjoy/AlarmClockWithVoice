@@ -23,6 +23,18 @@ public class Alarm implements Serializable {
         this.isEnabled = isEnabled;
     }
 
+    // Default constructor
+    public Alarm() {
+        // Initialize with default values
+        this.id = -1; // Or set to -1 if ID is not required initially
+        this.time = "10:00 AM"; // Default time
+        this.isRepeating = false;
+        this.repeatDays = "";
+        this.ringtoneUri = "default_ringtone_uri";
+        this.label = "New Alarm";
+        this.isEnabled = true;
+    }
+
     public String getRepeatMode() {
         // This is where you define the logic to interpret the repeatDays string
         // and return a user-friendly description of the repeat mode.
