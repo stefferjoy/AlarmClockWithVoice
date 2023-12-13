@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.service.controls.actions.FloatAction;
 import android.speech.RecognizerIntent;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,17 +53,23 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
             List<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             String spokenText = results.get(0);
+            Log.d("Voice Recognition", "Recognized text: " + spokenText);
             setAlarm(spokenText); // Use this text to set the alarm
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
 
+
     private void setAlarm(String spokenText) {
         try {
             // Attempt to parse the spoken text into a date object
+            String adjustedSpokenText = spokenText.replace("p.m", "PM").replace("a.m", "AM");
+
             SimpleDateFormat format = new SimpleDateFormat("h:mm a", Locale.US);
-            Date date = format.parse(spokenText);
+            Date date = format.parse(adjustedSpokenText);
+            Log.d("Set Alarm", "Parsed Date: " + date);
+
 
             if (date != null) {
                 Calendar calendar = Calendar.getInstance();
@@ -95,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Could not recognize the time. Please try again.", Toast.LENGTH_SHORT).show();
             }
         } catch (ParseException e) {
+            Log.e("Set Alarm", "ParseException: " + e.getMessage());
+
             // Handle the case where the spoken text is not in expected format
             Toast.makeText(this, "Could not parse the time. Please try again.", Toast.LENGTH_SHORT).show();
         }
