@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -66,6 +67,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Optionally, cancel the current notification
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     private void showPermissionRequestDialog(final Context context) {
         new AlertDialog.Builder(context)
                 .setTitle("Permission Required")
