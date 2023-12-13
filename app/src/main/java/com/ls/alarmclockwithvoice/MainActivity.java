@@ -1,7 +1,10 @@
 package com.ls.alarmclockwithvoice;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -19,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.ls.alarmclockwithvoice.databinding.ActivityMainBinding;
 
 import java.text.ParseException;
@@ -31,6 +35,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.content.SharedPreferences;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity implements OnAlarmClickListener{
@@ -85,6 +91,25 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         // Now check for empty alarms
         checkForEmptyAlarms();
         alarmAdapter.notifyDataSetChanged();
+
+
+        // Update the onSwiped method of your ItemTouchHelper to call deleteAlarm correctly
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false; // We are not implementing move functionality in this case
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                Alarm alarmToDelete = alarmList.get(position);
+                deleteAlarm(alarmToDelete, position); // Call deleteAlarm with the correct parameters
+            }
+        });
+
+        itemTouchHelper.attachToRecyclerView(binding.alarmsRecyclerView);
+
 
     }
 
@@ -141,11 +166,12 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
                 // Schedule the alarm
                 scheduleAlarm(setCalendar.getTimeInMillis());
-
                 Alarm newAlarm = new Alarm();
                 // Set properties of newAlarm based on parsed data
+                // This is where you should set the time of the alarm based on the parsed date
+                newAlarm.setTime(format.format(date)); // Make sure to set the correct time here
                 addAlarm(newAlarm);
-                saveAlarm(newAlarm); // Save the alarm
+                saveAlarm(newAlarm);
 
             } else {
                 Toast.makeText(this, "Could not recognize the time. Please try again.", Toast.LENGTH_SHORT).show();
@@ -227,6 +253,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         showAlarmDetails(alarm);
 
     }
+    // This method saves a single alarm to SharedPreferences
     public void saveAlarm(Alarm alarm) {
         try {
             // Create a JSONObject from the Alarm object
@@ -246,11 +273,77 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
             SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("alarm_" + alarm.getId(), alarmJson);
-            editor.apply();
+            editor.apply(); // No clear() call here
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
+    // This method saves the entire list of alarms to SharedPreferences
+    public void saveAlarms() {
+        SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        // Clear all current alarms in SharedPreferences
+        editor.clear();
+
+        // Convert each alarm in the alarmList to a JSON string and save it
+        for (Alarm alarm : alarmList) {
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("id", alarm.getId());
+                jsonObject.put("time", alarm.getTime());
+                jsonObject.put("isRepeating", alarm.isRepeating());
+                jsonObject.put("repeatDays", alarm.getRepeatDays());
+                jsonObject.put("ringtoneUri", alarm.getRingtoneUri());
+                jsonObject.put("label", alarm.getLabel());
+                jsonObject.put("isEnabled", alarm.isEnabled());
+
+                String alarmJson = jsonObject.toString();
+                editor.putString("alarm_" + alarm.getId(), alarmJson);
+            } catch (JSONException e) {
+                e.printStackTrace(); // Handle the exception properly
+            }
+        }
+
+        editor.apply();
+    }
+
+    private void deleteAlarm(Alarm alarm, int position) {
+        // Cancel the alarm from the AlarmManager
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, alarm.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmManager.cancel(pendingIntent);
+
+        // Remove the alarm from SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("alarm_" + alarm.getId());
+        editor.apply();
+
+        // Remove the alarm from the list
+        alarmList.remove(position);
+        alarmAdapter.notifyItemRemoved(position);
+
+        // Save the updated list of alarms
+        saveAlarms();
+
+        // Optionally show a Snackbar to undo the delete
+        Snackbar.make(binding.alarmsRecyclerView, "Alarm deleted", Snackbar.LENGTH_LONG)
+                .setAction("UNDO", view -> undoDelete(alarm, position))
+                .show();
+    }
+
+
+    // Undo the deletion of an alarm
+    private void undoDelete(Alarm alarm, int position) {
+        alarmList.add(position, alarm);
+        alarmAdapter.notifyItemInserted(position);
+        saveAlarms(); // Here we want to save all alarms again
+    }
+
 
     // Method to load all saved alarms from SharedPreferences
     private void loadAlarms() {
