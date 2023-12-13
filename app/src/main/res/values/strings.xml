@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">AlarmClockWithVoice</string>
+    <string name="set_alarm">Set Alarm</string>
+    <string name="alarm">Alarm</string>
+    <string name="add_alarm">Add Alarm</string>
+    <string name="current_time">%s</string>
 </resources>
