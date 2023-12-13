@@ -16,8 +16,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.service.controls.actions.FloatAction;
 import android.speech.RecognizerIntent;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
     private static final int SPEECH_REQUEST_CODE = 0;
     private ActivityMainBinding binding;
     private AlarmAdapter alarmAdapter;
-    private TextView currentTimeTextView;
     private List<Alarm> alarmList; // List to hold Alarm objects
 
 
@@ -84,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         binding.alarmsRecyclerView.setAdapter(alarmAdapter);
 
         // Initialize the TextView for current time
-        currentTimeTextView = findViewById(R.id.noAlarmsText);
+        TextView currentTimeTextView = findViewById(R.id.noAlarmsText);
         updateCurrentTime();
 
 
@@ -329,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
         // Save the updated list of alarms
         saveAlarms();
+        checkForEmptyAlarms();
 
         // Optionally show a Snackbar to undo the delete
         Snackbar.make(binding.alarmsRecyclerView, "Alarm deleted", Snackbar.LENGTH_LONG)
