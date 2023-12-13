@@ -1,7 +1,11 @@
 package com.ls.alarmclockwithvoice;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,8 +13,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,9 +28,11 @@ import android.service.controls.actions.FloatAction;
 import android.speech.RecognizerIntent;
 import android.transition.TransitionManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -72,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         alarmList = new ArrayList<>();
         alarmList.add(new Alarm(1, "08:00 AM", false, "Mon,Tue", "ringtoneUri", "Test Alarm 1", true));
         // Initialize the adapter with the alarm list
-        alarmAdapter = new AlarmAdapter(alarmList, this);
+        alarmAdapter = new AlarmAdapter(alarmList, this,this);
 
         binding.alarmsRecyclerView.setAdapter(alarmAdapter);
         Log.d("Mainact:", "alarmlist:"+alarmList);
@@ -252,8 +264,45 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
     public void onAlarmClick(Alarm alarm) {
 
         showAlarmDetails(alarm);
+        showEditAlarmDialog(alarm);
+
 
     }
+    private void showEditAlarmDialog(Alarm alarm) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.edit_alarm_dialog, null);
+        TimePicker timePicker = dialogView.findViewById(R.id.timePicker);
+
+        // Set up the time picker with the alarm's time
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(alarm.getTime());
+        timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
+        timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView)
+                .setTitle("Edit Alarm")
+                .setPositiveButton("Save", (dialog, which) -> {
+                    int hour = timePicker.getCurrentHour();
+                    int minute = timePicker.getCurrentMinute();
+                    calendar.set(Calendar.HOUR_OF_DAY, hour);
+                    calendar.set(Calendar.MINUTE, minute);
+                    updateAlarm(alarm, calendar.getTimeInMillis());
+                })
+                .setNegativeButton("Cancel", null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void updateAlarm(Alarm alarm, long newTimeInMillis) {
+        AlarmReceiver.cancelAlarm(this, alarm.getId());
+        alarm.setTime(newTimeInMillis);
+        AlarmReceiver.scheduleAlarm(this, alarm.getId(), newTimeInMillis);
+        saveAlarm(alarm);
+    }
+
+
     // This method saves a single alarm to SharedPreferences
     public void saveAlarm(Alarm alarm) {
         try {
@@ -373,6 +422,5 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         }
         alarmAdapter.notifyDataSetChanged();
     }
-
 
 }

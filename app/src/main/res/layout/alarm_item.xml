@@ -7,6 +7,14 @@
     android:layout_height="wrap_content"
     >
 
+        <Switch
+            android:id="@+id/switch_alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="10dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
 
         <RelativeLayout
             android:layout_width="wrap_content"

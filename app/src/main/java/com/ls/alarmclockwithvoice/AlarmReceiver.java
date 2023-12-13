@@ -20,7 +20,9 @@ import androidx.core.app.NotificationManagerCompat;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
+
     private static final String CHANNEL_ID = "alarm_channel";
+    private static final String ALARM_ID_EXTRA = "alarm_id";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -28,15 +30,44 @@ public class AlarmReceiver extends BroadcastReceiver {
         if ("SNOOZE_ACTION".equals(intent.getAction())) {
             snoozeAlarm(context);
         } else {
-// Showing a toast
-            Toast.makeText(context, "Alarm!", Toast.LENGTH_LONG).show();
+            // Extract alarm details from intent
+            int alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
+            if (alarmId != -1) {
 
-            // Showing a notification
-            createNotificationChannel(context);
-            showNotification(context);
-            // Play the alarm sound
-            playAlarmSound(context);        }
+                // Showing a toast
+                Toast.makeText(context, "Alarm!", Toast.LENGTH_LONG).show();
+
+                // Showing a notification
+                createNotificationChannel(context);
+                showNotification(context);
+
+                // Play the alarm sound
+                playAlarmSound(context);
+            }
+        }
     }
+    // Method to schedule an alarm
+    public static void scheduleAlarm(Context context, int alarmId, long timeInMillis) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra(ALARM_ID_EXTRA, alarmId);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        if (alarmManager != null) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
+        }
+    }
+    // Method to cancel an alarm
+    public static void cancelAlarm(Context context, int alarmId) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }
+    }
+
 
     private void snoozeAlarm(Context context) {
         // Snooze time in minutes
