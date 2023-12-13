@@ -127,7 +127,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
     private void playAlarmSound(Context context) {
         // Initialize a MediaPlayer instance
-        MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm_sound); // Replace 'alarm_sound' with your audio file name
+        MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm_sound);
 
         // Start playing the sound
         mediaPlayer.start();
@@ -135,4 +135,5 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Optional: Set OnCompletionListener if you want to release the MediaPlayer after the sound is played
         mediaPlayer.setOnCompletionListener(MediaPlayer::release);
     }
+
 }

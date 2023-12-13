@@ -28,6 +28,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import android.content.SharedPreferences;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity implements OnAlarmClickListener{
 
@@ -59,13 +63,14 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
         // Initialize the alarm list
         alarmList = new ArrayList<>();
-
         alarmList.add(new Alarm(1, "08:00 AM", false, "Mon,Tue", "ringtoneUri", "Test Alarm 1", true));
         // Initialize the adapter with the alarm list
         alarmAdapter = new AlarmAdapter(alarmList, this);
 
         binding.alarmsRecyclerView.setAdapter(alarmAdapter);
         Log.d("Mainact:", "alarmlist:"+alarmList);
+        loadAlarms(); // Load saved alarms
+
         binding.alarmsRecyclerView.setLayoutManager(new LinearLayoutManager(this)); // Add this line
         binding.alarmsRecyclerView.setAdapter(alarmAdapter);
 
@@ -137,9 +142,11 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
                 // Schedule the alarm
                 scheduleAlarm(setCalendar.getTimeInMillis());
 
-                // Add the new alarm to the list and update the RecyclerView
-                Alarm newAlarm = new Alarm(); // Create a new Alarm object with the necessary details
+                Alarm newAlarm = new Alarm();
+                // Set properties of newAlarm based on parsed data
                 addAlarm(newAlarm);
+                saveAlarm(newAlarm); // Save the alarm
+
             } else {
                 Toast.makeText(this, "Could not recognize the time. Please try again.", Toast.LENGTH_SHORT).show();
             }
@@ -220,4 +227,57 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         showAlarmDetails(alarm);
 
     }
+    public void saveAlarm(Alarm alarm) {
+        try {
+            // Create a JSONObject from the Alarm object
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", alarm.getId());
+            jsonObject.put("time", alarm.getTime());
+            jsonObject.put("isRepeating", alarm.isRepeating());
+            jsonObject.put("repeatDays", alarm.getRepeatDays());
+            jsonObject.put("ringtoneUri", alarm.getRingtoneUri());
+            jsonObject.put("label", alarm.getLabel());
+            jsonObject.put("isEnabled", alarm.isEnabled());
+
+            // Convert JSONObject to String
+            String alarmJson = jsonObject.toString();
+
+            // Save this string to SharedPreferences
+            SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("alarm_" + alarm.getId(), alarmJson);
+            editor.apply();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to load all saved alarms from SharedPreferences
+    private void loadAlarms() {
+        SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
+        Map<String, ?> allEntries = sharedPreferences.getAll();
+
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            try {
+                JSONObject jsonObject = new JSONObject(entry.getValue().toString());
+
+                Alarm alarm = new Alarm();
+                alarm.setId(jsonObject.getInt("id"));
+                alarm.setTime(jsonObject.getString("time"));
+                alarm.setRepeating(jsonObject.getBoolean("isRepeating"));
+                alarm.setRepeatDays(jsonObject.getString("repeatDays"));
+                alarm.setRingtoneUri(jsonObject.getString("ringtoneUri"));
+                alarm.setLabel(jsonObject.getString("label"));
+                alarm.setEnabled(jsonObject.getBoolean("isEnabled"));
+
+
+                alarmList.add(alarm);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        alarmAdapter.notifyDataSetChanged();
+    }
+
+
 }
