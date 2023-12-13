@@ -110,6 +110,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    // Example method to add a new alarm to the list and update the RecyclerView
+    private void addAlarmToList(Alarm newAlarm) {
+        alarmList.add(newAlarm);
+        alarmAdapter.notifyDataSetChanged(); // Notify the adapter that the data has changed
+        checkForEmptyAlarms(); // Check if the list is empty and update UI accordingly
+    }
+
 
 
     @Override
