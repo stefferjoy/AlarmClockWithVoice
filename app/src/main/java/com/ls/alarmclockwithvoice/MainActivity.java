@@ -6,15 +6,19 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.service.controls.actions.FloatAction;
 import android.speech.RecognizerIntent;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.ls.alarmclockwithvoice.databinding.ActivityMainBinding;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -54,30 +58,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void setAlarm(String spokenText) {
+        try {
+            // Attempt to parse the spoken text into a date object
+            SimpleDateFormat format = new SimpleDateFormat("h:mm a", Locale.US);
+            Date date = format.parse(spokenText);
 
-    @SuppressLint("ScheduleExactAlarm")
-    private void setAlarm(String time) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(this, AlarmReceiver.class); // Replace with your BroadcastReceiver
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+            if (date != null) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(date);
 
-        // Example: parsing a time like "10:30 AM"
-        String[] parts = time.split("[: ]");
-        int hour = Integer.parseInt(parts[0]);
-        int minute = Integer.parseInt(parts[1]);
-        boolean isPM = parts[2].equalsIgnoreCase("PM");
+                // Get the AlarmManager service
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-        if (isPM && hour < 12) {
-            hour += 12;
+                // Create the Intent and PendingIntent to schedule the alarm
+                Intent intent = new Intent(this, AlarmReceiver.class);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+                // Check if the app can schedule exact alarms
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+                    // Prompt the user to grant the permission
+                    Toast.makeText(this, "Please grant the permission to schedule exact alarms.", Toast.LENGTH_SHORT).show();
+                    // Intent to navigate the user to the app's settings page
+                    Intent settingsIntent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    settingsIntent.setData(Uri.fromParts("package", getPackageName(), null));
+                    startActivity(settingsIntent);
+                    return;
+                }
+
+                // Schedule the alarm
+                if (alarmManager != null) {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+                }
+            } else {
+                // Handle the case where the date could not be parsed
+                Toast.makeText(this, "Could not recognize the time. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (ParseException e) {
+            // Handle the case where the spoken text is not in expected format
+            Toast.makeText(this, "Could not parse the time. Please try again.", Toast.LENGTH_SHORT).show();
         }
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        calendar.set(Calendar.SECOND, 0);
-
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
     }
+
+
 
 
     @Override
