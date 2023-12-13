@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
             SharedPreferences sharedPreferences = getSharedPreferences("AlarmClockWithVoice", MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("alarm_" + alarm.getId(), alarmJson);
-            editor.apply(); // No clear() call here
+            editor.apply();
         } catch (Exception e) {
             e.printStackTrace();
         }
