@@ -28,20 +28,14 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Alarm alarm = (Alarm) intent.getSerializableExtra("alarm"); // Retrieve the 'alarm' object
-
-        intent = new Intent(context, AlarmReceiver.class);
-        intent.putExtra("alarm", alarm); // Pass the 'alarm' object here
-        context.sendBroadcast(intent);
-
-
-        // Check if the alarm object is not null and is enabled
-        if (alarm != null && alarm.isEnabled()) {
+        // Retrieve the alarm_id from the intent
+        int alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
+        if (alarmId != -1) {
             if ("SNOOZE_ACTION".equals(intent.getAction())) {
                 snoozeAlarm(context);
             } else {
                 // Extract alarm details from intent
-                int alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
+                 alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
                 if (alarmId != -1) {
 
                     // Showing a toast
@@ -67,17 +61,18 @@ public class AlarmReceiver extends BroadcastReceiver {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra(ALARM_ID_EXTRA, alarmId);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); // Add the flag here
 
         if (alarmManager != null) {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
         }
     }
+
     // Method to cancel an alarm
     public static void cancelAlarm(Context context, int alarmId) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); // Add the flag here
 
         if (alarmManager != null) {
             alarmManager.cancel(pendingIntent);

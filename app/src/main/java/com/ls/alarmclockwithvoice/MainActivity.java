@@ -146,8 +146,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         startActivityForResult(intent, SPEECH_REQUEST_CODE);
     }
 
-    // This callback is invoked when the Speech Recognizer returns.
-    // This is where you process the intent and extract the speech text from the intent.
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
@@ -185,15 +184,23 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
                 // Schedule the alarm
                 scheduleAlarm(timeInMillis);
-                Switch switchAlarm = itemBinding.switchAlarm;
-                switchAlarm.setChecked(true);
-                Alarm newAlarm = new Alarm();
-                // Set properties of newAlarm based on parsed data
-                // This is where you should set the time of the alarm based on 'timeInMillis'
-                newAlarm.setTime(timeInMillis); // Set the correct time here using 'timeInMillis'
-                addAlarm(newAlarm);
-                saveAlarm(newAlarm);
 
+                // Initialize the Switch
+                Switch switchAlarm = itemBinding != null ? itemBinding.switchAlarm : null;
+
+                if (switchAlarm != null) {
+                    // Set the Switch state to true
+                    switchAlarm.setChecked(true);
+                } else {
+                    // Handle the case where switchAlarm is null or not properly initialized
+                    // You can log an error, display a message, or take appropriate action here
+                }
+
+                Alarm newAlarm = new Alarm(/* pass necessary parameters here */);
+                newAlarm.setTime(timeInMillis); // Set the correct time here using 'timeInMillis'
+                newAlarm.setEnabled(true); // Make sure the alarm is enabled
+                addAlarm(newAlarm); // Add the alarm to your list and adapter
+                saveAlarm(newAlarm); // Save the alarm state
             } else {
                 Toast.makeText(this, "Could not recognize the time. Please try again.", Toast.LENGTH_SHORT).show();
             }
@@ -201,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
             Toast.makeText(this, "Could not parse the time. Please try again.", Toast.LENGTH_SHORT).show();
         }
     }
+
     public void showAlarmDetails(Alarm alarm) {
         // For example, showing a dialog with alarm details
         new AlertDialog.Builder(this)

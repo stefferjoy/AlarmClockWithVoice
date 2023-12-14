@@ -28,6 +28,7 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
     }
 
 
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // Inflate with ViewBinding
@@ -35,7 +36,6 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
         return new ViewHolder(binding);
     }
 
-    @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Alarm alarm = alarmList.get(position);
         AlarmItemBinding binding = holder.binding;
@@ -44,11 +44,26 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
         holder.binding.alarmTimeTextView.setText(alarm.getTime());
         holder.binding.alarmRepeatTextView.setText(alarm.getRepeatMode());
         holder.binding.switchAlarm.setChecked(alarm.isEnabled());
+
         holder.binding.switchAlarm.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Modify the alarm data
             alarm.setEnabled(isChecked);
+
+            if (isChecked) {
+                // Schedule the alarm
+                AlarmReceiver.scheduleAlarm(holder.itemView.getContext(), alarm.getId(), alarm.getTimeInMillis());
+            } else {
+                // Cancel the alarm
+                AlarmReceiver.cancelAlarm(holder.itemView.getContext(), alarm.getId());
+            }
+
+            // Update the alarm state in SharedPreferences and notify the adapter
             updateAlarmState(alarm, holder.itemView.getContext());
+            notifyDataSetChanged();
         });
+
     }
+
     // Call this method when you want to check for empty state
     public boolean isEmpty() {
         return alarmList.isEmpty();

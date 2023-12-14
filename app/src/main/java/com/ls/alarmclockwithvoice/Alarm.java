@@ -28,7 +28,14 @@ public class Alarm implements Serializable {
     }
 
     public Alarm() {
-        Alarm alarm = new Alarm(1, "08:00 AM", false, "Mon,Tue", "ringtoneUri", "Test Alarm 1", true);
+        // Initialize with default values
+        this.id = -1; // Or some default ID
+        this.time = "08:00 AM"; // Default time
+        this.isRepeating = false; // Default repeating status
+        this.repeatDays = ""; // Default repeat days
+        this.ringtoneUri = ""; // Default ringtone Uri
+        this.label = "New Alarm"; // Default label
+        this.isEnabled = true; // Default enabled status
     }
 
     // Modify the getTime() method to return a long
