@@ -4,6 +4,8 @@ import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Switch;
+
 import androidx.recyclerview.widget.RecyclerView;
 import com.ls.alarmclockwithvoice.databinding.AlarmItemBinding;
 
@@ -36,6 +38,8 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Alarm alarm = alarmList.get(position);
+        AlarmItemBinding binding = holder.binding;
+
         // Bind the data to the views
         holder.binding.alarmTimeTextView.setText(alarm.getTime());
         holder.binding.alarmRepeatTextView.setText(alarm.getRepeatMode());
@@ -44,7 +48,6 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
             alarm.setEnabled(isChecked);
             updateAlarmState(alarm, holder.itemView.getContext());
         });
-
     }
     // Call this method when you want to check for empty state
     public boolean isEmpty() {
@@ -58,7 +61,11 @@ public class AlarmAdapter extends RecyclerView.Adapter<AlarmAdapter.ViewHolder> 
 
     // ViewHolder class
     public class ViewHolder extends RecyclerView.ViewHolder {
-        final AlarmItemBinding binding;
+
+        private AlarmItemBinding binding;
+
+
+
 
         public ViewHolder(AlarmItemBinding binding) {
             super(binding.getRoot());

@@ -1,5 +1,9 @@
 package com.ls.alarmclockwithvoice;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class Alarm implements Serializable {
     private int id;
@@ -23,6 +27,24 @@ public class Alarm implements Serializable {
         this.isEnabled = isEnabled;
     }
 
+    public Alarm() {
+        Alarm alarm = new Alarm(1, "08:00 AM", false, "Mon,Tue", "ringtoneUri", "Test Alarm 1", true);
+    }
+
+    // Modify the getTime() method to return a long
+    public long getTimeInMillis() {
+        // Convert the time string to a long value
+        SimpleDateFormat format = new SimpleDateFormat("h:mm a", Locale.US);
+        try {
+            Date date = format.parse(this.time); // Assuming 'time' is the time string in your Alarm class
+            if (date != null) {
+                return date.getTime(); // Return the time in milliseconds
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return 0; // Return a default value or handle errors as needed
+    }
 
 
     public String getRepeatMode() {
@@ -49,9 +71,13 @@ public class Alarm implements Serializable {
         return time;
     }
 
-    public void setTime(String time) {
-        this.time = time;
+    public void setTime(long timeInMillis) {
+        // Convert the long value to a formatted time String if needed
+        SimpleDateFormat format = new SimpleDateFormat("h:mm a", Locale.US);
+        Date date = new Date(timeInMillis);
+        this.time = format.format(date);
     }
+
 
     public boolean isRepeating() {
         return isRepeating;

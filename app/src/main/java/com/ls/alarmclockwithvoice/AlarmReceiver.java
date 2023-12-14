@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+
 public class AlarmReceiver extends BroadcastReceiver {
 
 
@@ -26,26 +27,41 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // Check if this is a snooze action
-        if ("SNOOZE_ACTION".equals(intent.getAction())) {
-            snoozeAlarm(context);
-        } else {
-            // Extract alarm details from intent
-            int alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
-            if (alarmId != -1) {
 
-                // Showing a toast
-                Toast.makeText(context, "Alarm!", Toast.LENGTH_LONG).show();
+        Alarm alarm = (Alarm) intent.getSerializableExtra("alarm"); // Retrieve the 'alarm' object
 
-                // Showing a notification
-                createNotificationChannel(context);
-                showNotification(context);
+        intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra("alarm", alarm); // Pass the 'alarm' object here
+        context.sendBroadcast(intent);
 
-                // Play the alarm sound
-                playAlarmSound(context);
+
+        // Check if the alarm object is not null and is enabled
+        if (alarm != null && alarm.isEnabled()) {
+            if ("SNOOZE_ACTION".equals(intent.getAction())) {
+                snoozeAlarm(context);
+            } else {
+                // Extract alarm details from intent
+                int alarmId = intent.getIntExtra(ALARM_ID_EXTRA, -1);
+                if (alarmId != -1) {
+
+                    // Showing a toast
+                    Toast.makeText(context, "Alarm!", Toast.LENGTH_LONG).show();
+
+
+
+                    // Showing a notification
+                    createNotificationChannel(context);
+                    showNotification(context);
+
+                    // Play the alarm sound
+                    playAlarmSound(context);
+                }
             }
         }
+
     }
+
+
     // Method to schedule an alarm
     public static void scheduleAlarm(Context context, int alarmId, long timeInMillis) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);

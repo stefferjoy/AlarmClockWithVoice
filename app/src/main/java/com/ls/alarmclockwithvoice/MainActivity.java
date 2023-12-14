@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.ls.alarmclockwithvoice.databinding.ActivityMainBinding;
+import com.ls.alarmclockwithvoice.databinding.AlarmItemBinding;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
     private ActivityMainBinding binding;
     private AlarmAdapter alarmAdapter;
     private List<Alarm> alarmList; // List to hold Alarm objects
+    private AlarmItemBinding itemBinding;
 
 
 
@@ -177,12 +180,17 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
                     setCalendar.add(Calendar.DATE, 1);
                 }
 
+                // Now 'setCalendar' contains the time in milliseconds
+                long timeInMillis = setCalendar.getTimeInMillis();
+
                 // Schedule the alarm
-                scheduleAlarm(setCalendar.getTimeInMillis());
+                scheduleAlarm(timeInMillis);
+                Switch switchAlarm = itemBinding.switchAlarm;
+                switchAlarm.setChecked(true);
                 Alarm newAlarm = new Alarm();
                 // Set properties of newAlarm based on parsed data
-                // This is where you should set the time of the alarm based on the parsed date
-                newAlarm.setTime(format.format(date)); // Make sure to set the correct time here
+                // This is where you should set the time of the alarm based on 'timeInMillis'
+                newAlarm.setTime(timeInMillis); // Set the correct time here using 'timeInMillis'
                 addAlarm(newAlarm);
                 saveAlarm(newAlarm);
 
@@ -275,24 +283,43 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
         // Set up the time picker with the alarm's time
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(alarm.getTime());
-        timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
-        timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
+        calendar.setTimeInMillis(alarm.getTimeInMillis()); // Use getTimeInMillis() to get the time in milliseconds
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Use setHour and setMinute for API level 23 and higher
+            timePicker.setHour(calendar.get(Calendar.HOUR_OF_DAY));
+            timePicker.setMinute(calendar.get(Calendar.MINUTE));
+        } else {
+            // For API level 22 and lower, you can use setCurrentHour and setCurrentMinute (deprecated)
+            timePicker.setCurrentHour(calendar.get(Calendar.HOUR_OF_DAY));
+            timePicker.setCurrentMinute(calendar.get(Calendar.MINUTE));
+        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(dialogView)
                 .setTitle("Edit Alarm")
                 .setPositiveButton("Save", (dialog, which) -> {
-                    int hour = timePicker.getCurrentHour();
-                    int minute = timePicker.getCurrentMinute();
+                    int hour, minute;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        // Use getHour and getMinute for API level 23 and higher
+                        hour = timePicker.getHour();
+                        minute = timePicker.getMinute();
+                    } else {
+                        // For API level 22 and lower, you can use getCurrentHour and getCurrentMinute (deprecated)
+                        hour = timePicker.getCurrentHour();
+                        minute = timePicker.getCurrentMinute();
+                    }
                     calendar.set(Calendar.HOUR_OF_DAY, hour);
                     calendar.set(Calendar.MINUTE, minute);
+                    alarm.setTime(calendar.getTimeInMillis()); // Use setTime with milliseconds
                     updateAlarm(alarm, calendar.getTimeInMillis());
                 })
                 .setNegativeButton("Cancel", null);
         AlertDialog dialog = builder.create();
         dialog.show();
     }
+
+
 
 
     private void updateAlarm(Alarm alarm, long newTimeInMillis) {
@@ -364,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         // Cancel the alarm from the AlarmManager
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent intent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, alarm.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, alarm.getId(), intent, PendingIntent.FLAG_IMMUTABLE);
         alarmManager.cancel(pendingIntent);
 
         // Remove the alarm from SharedPreferences
@@ -407,13 +434,12 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
 
                 Alarm alarm = new Alarm();
                 alarm.setId(jsonObject.getInt("id"));
-                alarm.setTime(jsonObject.getString("time"));
+                alarm.setTime(jsonObject.getLong("time")); // Use getLong to retrieve the time as milliseconds
                 alarm.setRepeating(jsonObject.getBoolean("isRepeating"));
                 alarm.setRepeatDays(jsonObject.getString("repeatDays"));
                 alarm.setRingtoneUri(jsonObject.getString("ringtoneUri"));
                 alarm.setLabel(jsonObject.getString("label"));
                 alarm.setEnabled(jsonObject.getBoolean("isEnabled"));
-
 
                 alarmList.add(alarm);
             } catch (Exception e) {
@@ -422,5 +448,6 @@ public class MainActivity extends AppCompatActivity implements OnAlarmClickListe
         }
         alarmAdapter.notifyDataSetChanged();
     }
+
 
 }
